@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--通用-->
+    <color name="colorPrimary">#000000</color>
+    <color name="colorPrimaryDark">#000000</color>
+    <color name="colorAccent">#E040FB</color>
+
+    <color name="colorPrimary_v21">#FF4081</color>
+    <color name="colorPrimaryDark_v21">#FF4081</color>
+    <color name="colorAccent_v21">#AA00FF</color>
+
+    <color name="translation">#00000000</color>
+    <!--启动页-->
+    <color name="appName">#ffffff</color>
+    <color name="appNameBackground">#6e000000</color>
+
+
+</resources>
