@@ -6,8 +6,9 @@ import android.support.v7.app.AppCompatActivity
 import android.view.GestureDetector
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.huantansheng.meitumeixin.R
-import com.huantansheng.meitumeixin.base.MyGlide
+import com.huantansheng.meitumeixin.entity.Photo
 import com.huantansheng.meitumeixin.listener.OnDragTouchListener
 import com.huantansheng.meitumeixin.utiles.ScreenUtil
 import kotlinx.android.synthetic.main.activity_photo.*
@@ -26,10 +27,9 @@ class PhotoActivity : AppCompatActivity(), OnDragTouchListener.DragDirectionList
 
 
     val TAG = "PhotoActivity"
-    var photos = ArrayList<String>()
+    var photos = ArrayList<Photo>()
     var i = 0
-    lateinit var requestManager: RequestManager
-    lateinit var gestureDetector: GestureDetector
+
     val minDistance = ScreenUtil.dp2px(null, 80f)
 
     companion object {
@@ -45,23 +45,20 @@ class PhotoActivity : AppCompatActivity(), OnDragTouchListener.DragDirectionList
     }
 
     fun init() {
-        photos.addAll(intent.getStringArrayListExtra(INTENT_DATA))
+        photos.addAll(intent.getSerializableExtra(INTENT_DATA) as ArrayList<Photo>)
         i = intent.getIntExtra(INTENT_POSITION, 0)
-        requestManager = Glide.with(this)
-        requestManager.applyDefaultRequestOptions(MyGlide.getOptions())
-
         iv_photo.setOnTouchListener(OnDragTouchListener(this, iv_photo, minDistance, this))
 
         showPhoto()
     }
 
     fun showPhoto() {
-        requestManager.load(photos[i]).into(iv_photo)
+        Glide.with(this).load(photos[i].url).diskCacheStrategy(DiskCacheStrategy.ALL).into(iv_photo)
         i++
         if (i == photos.size) {
             i = 0
         }
-        requestManager.load(photos[i]).into(iv_back_photo)
+        Glide.with(this).load(photos[i].url).diskCacheStrategy(DiskCacheStrategy.ALL).into(iv_back_photo)
     }
 
 }

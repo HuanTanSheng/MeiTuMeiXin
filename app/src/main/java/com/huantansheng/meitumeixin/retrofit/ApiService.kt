@@ -9,7 +9,7 @@ import rx.Observable
  */
 interface ApiService {
 
-    @GET("")
+    @GET("https://raw.githubusercontent.com/HuanTanSheng/MeiTuMeiXin/master/app/src/main/assets/photos.json")
     fun getPhotos(): Observable<Photos>
 
 }

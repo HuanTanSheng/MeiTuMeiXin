@@ -3,21 +3,26 @@ package com.huantansheng.meitumeixin.main.fragment.imagelist
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.widget.SwipeRefreshLayout
-import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.support.v7.widget.StaggeredGridLayoutManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import com.huantansheng.meitumeixin.R
-import com.huantansheng.meitumeixin.base.MyGlide
 import com.huantansheng.meitumeixin.constants.Constants
+import com.huantansheng.meitumeixin.entity.Photo
+import com.huantansheng.meitumeixin.entity.Photos
 import com.huantansheng.meitumeixin.listener.CommonListener
 import com.huantansheng.meitumeixin.main.fragment.imagelist.contract.LikedContract
 import com.huantansheng.meitumeixin.photo.PhotoActivity
+import com.huantansheng.meitumeixin.retrofit.Api
 import com.huantansheng.meitumeixin.utiles.ScreenUtil
 import org.jetbrains.anko.support.v4.startActivityForResult
+import rx.Subscriber
+import rx.android.schedulers.AndroidSchedulers
+import rx.schedulers.Schedulers
 
 /**
  * Created by huan on 2017/7/9.
@@ -29,12 +34,12 @@ class ImageListFragment : Fragment(), LikedContract.IView, SwipeRefreshLayout.On
 
     private var type = 0
     private lateinit var likedAdapter: LikedRecyclerViewAdapter
-    private lateinit var layoutManager: GridLayoutManager
-    private var likedList = ArrayList<String>()
+    private lateinit var layoutManager: StaggeredGridLayoutManager
+    private var likedList = ArrayList<Photo>()
     val CODE_REQUEST = 101
 
     private lateinit var rvLiked: RecyclerView
-    private lateinit var glide : RequestManager
+    private lateinit var glide: RequestManager
 
     //**********************************************ImageListFragment
     companion object {
@@ -49,7 +54,6 @@ class ImageListFragment : Fragment(), LikedContract.IView, SwipeRefreshLayout.On
         }
     }
 
-
     fun initView() {
         var spanCount = 0
         when (type) {
@@ -63,9 +67,9 @@ class ImageListFragment : Fragment(), LikedContract.IView, SwipeRefreshLayout.On
                 spanCount = Constants.GRIDLAYOUTMANAGER_SPANCOUNT_UNLIKED
             }
         }
-        layoutManager = GridLayoutManager(context, spanCount)
+        layoutManager = StaggeredGridLayoutManager(spanCount, StaggeredGridLayoutManager.VERTICAL)
         val screenWidth = ScreenUtil.getWidth(context)
-        likedAdapter = LikedRecyclerViewAdapter(glide,likedList, LayoutInflater.from(activity), screenWidth, spanCount, this)
+        likedAdapter = LikedRecyclerViewAdapter(glide, likedList, LayoutInflater.from(activity), screenWidth, spanCount, this)
 
         rvLiked.layoutManager = layoutManager
         rvLiked.adapter = likedAdapter
@@ -73,7 +77,10 @@ class ImageListFragment : Fragment(), LikedContract.IView, SwipeRefreshLayout.On
             override fun onScrollStateChanged(recyclerView: RecyclerView?, newState: Int) {
                 super.onScrollStateChanged(recyclerView, newState)
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                    var position = layoutManager.findLastVisibleItemPosition()
+                    var count = layoutManager.spanCount
+                    var lastpositions = IntArray(count)
+                    layoutManager.findLastVisibleItemPositions(lastpositions)
+                    var position = lastpositions.max()
                     if (position == likedList.size - 1) {
                         loadMore()
                     }
@@ -82,16 +89,30 @@ class ImageListFragment : Fragment(), LikedContract.IView, SwipeRefreshLayout.On
         })
     }
 
+
     fun initData() {
 
-        likedList.add("http://pic67.nipic.com/file/20150514/21036787_181947848862_2.jpg")
-        likedList.add("http://pic4.nipic.com/20091128/1951702_000139834348_2.jpg")
-        likedList.add("http://pic.58pic.com/58pic/11/09/64/39i58PICmgE.jpg")
-        likedList.add("http://b.hiphotos.baidu.com/zhidao/pic/item/1f178a82b9014a90e7eb9d17ac773912b21bee47.jpg")
-        likedList.add("http://c.hiphotos.baidu.com/zhidao/wh%3D450%2C600/sign=9742b125133853438c9a8f25a6239c48/29381f30e924b8990b693b716d061d950a7bf626.jpg")
-        likedList.add("http://c.hiphotos.baidu.com/zhidao/pic/item/b03533fa828ba61e9a43845d4734970a304e5916.jpg")
+        Api.getPhotos()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(object : Subscriber<Photos>() {
+                    override fun onNext(t: Photos?) {
+                        if (t != null) {
+                            likedList.addAll(t.photos)
+                            likedAdapter.notifyDataSetChanged()
+                        }
+                    }
 
-        likedAdapter.notifyDataSetChanged()
+                    override fun onCompleted() {
+
+                    }
+
+                    override fun onError(e: Throwable?) {
+
+                    }
+
+                })
+
     }
 
     //***************************************Fragment()
@@ -99,7 +120,7 @@ class ImageListFragment : Fragment(), LikedContract.IView, SwipeRefreshLayout.On
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         type = arguments.getInt(TYPE)
-        glide = Glide.with(this).applyDefaultRequestOptions(MyGlide.getOptions())
+        glide = Glide.with(this)
     }
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {

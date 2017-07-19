@@ -20,6 +20,7 @@ object Api {
 
     val mRetrofit = Retrofit.Builder()
             .client(okClient)
+            .baseUrl("https://raw.githubusercontent.com/HuanTanSheng/")
             .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
             .addConverterFactory(GsonConverterFactory.create())
             .build()
